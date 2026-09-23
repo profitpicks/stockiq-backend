@@ -1,0 +1,8 @@
+{
+  "name": "Stockiq",
+  "description": "Compliance-governed marketplace and immutable track-record platform for verified SEBI-registered RAs and IAs",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
