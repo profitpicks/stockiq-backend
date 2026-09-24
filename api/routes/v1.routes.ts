@@ -82,7 +82,6 @@ v1Router.get("/", (_req: Request, res: Response) => {
   });
 });
 
-
 /**
  * List Platform Roles & Metadata
  */
