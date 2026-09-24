@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "api/**/*.ts",
+    "config/**/*.ts",
+    "database/**/*.ts",
+    "modules/**/*.ts",
+    "adapters/**/*.ts",
+    "tests/**/*.ts"
+  ]
+}

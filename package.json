@@ -1,0 +1,32 @@
+{
+  "name": "stockiq",
+  "version": "0.1.0",
+  "description": "Compliance-governed marketplace and immutable track-record platform for verified SEBI-registered RAs and IAs",
+  "main": "api/server.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx api/server.ts",
+    "dev": "tsx watch api/server.ts",
+    "test": "tsx --test tests/unit/*.test.ts tests/integration/*.test.ts tests/e2e/*.test.ts",
+    "test:unit": "tsx --test tests/unit/*.test.ts",
+    "test:integration": "tsx --test tests/integration/*.test.ts",
+    "test:e2e": "tsx --test tests/e2e/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "tsx database/migrator.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.3",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.5",
+    "@types/pg": "^8.11.11",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
