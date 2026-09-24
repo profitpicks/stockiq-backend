@@ -96,17 +96,31 @@ export class PasswordService {
   }
 
   /**
+   * Helper to derive mobile and email for custom usernames
+   */
+  private static deriveIdentifierFields(identifier: string) {
+    const isEmail = identifier.includes("@");
+    const isPhone = /^\+?[0-9]{10,14}$/.test(identifier);
+    const mobile = isPhone
+      ? identifier
+      : `+919${crypto.createHash("md5").update(identifier).digest("hex").slice(0, 9)}`;
+    const email = isEmail ? identifier : `user_${identifier.replace(/\+/g, "")}@stockiq.local`;
+    return { mobile, email };
+  }
+
+  /**
    * Checks if an account is currently locked due to too many failed attempts.
    */
   public static async checkLockout(identifier: string): Promise<LockoutStatus> {
     const now = new Date();
+    const { mobile, email } = this.deriveIdentifierFields(identifier);
 
     try {
       const pool = db.getPool();
       const { rows } = await pool.query(
         `SELECT locked_until, failed_login_attempts FROM users 
-         WHERE mobile = $1 OR email = $1`,
-        [identifier]
+         WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+        [identifier, mobile, email]
       );
 
       if (rows.length > 0 && rows[0].locked_until) {
@@ -134,12 +148,13 @@ export class PasswordService {
   public static async recordFailedAttempt(identifier: string): Promise<{ isLocked: boolean; attemptsLeft: number }> {
     const now = new Date();
     let currentAttempts = 0;
+    const { mobile, email } = this.deriveIdentifierFields(identifier);
 
     try {
       const pool = db.getPool();
       const { rows } = await pool.query(
-        `SELECT id, failed_login_attempts FROM users WHERE mobile = $1 OR email = $1`,
-        [identifier]
+        `SELECT id, failed_login_attempts FROM users WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+        [identifier, mobile, email]
       );
 
       if (rows.length > 0) {
@@ -180,18 +195,27 @@ export class PasswordService {
   }
 
   /**
-   * Resets failed attempts after successful authentication.
+   * Resets failed attempts after successful authentication or admin unlock.
    */
   public static async resetFailedAttempts(identifier: string): Promise<void> {
+    const { mobile, email } = this.deriveIdentifierFields(identifier);
     try {
       const pool = db.getPool();
       await pool.query(
-        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE mobile = $1 OR email = $1`,
-        [identifier]
+        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+        [identifier, mobile, email]
       );
     } catch {
       this.memoryFailedAttempts.delete(identifier);
     }
+    this.memoryFailedAttempts.delete(identifier);
+  }
+
+  /**
+   * Explicitly unlocks an account.
+   */
+  public static async unlockAccount(identifier: string): Promise<void> {
+    await this.resetFailedAttempts(identifier);
   }
 
   /**
@@ -199,36 +223,46 @@ export class PasswordService {
    */
   public static async setPassword(userId: string, identifier: string, passwordHash: string): Promise<void> {
     const nowISO = new Date().toISOString();
+    const { mobile, email } = this.deriveIdentifierFields(identifier);
+
     try {
       const pool = db.getPool();
       await pool.query(
         `UPDATE users SET password_hash = $1, password_updated_at = $2, failed_login_attempts = 0, locked_until = NULL 
-         WHERE id = $3 OR mobile = $4 OR email = $4`,
-        [passwordHash, nowISO, userId, identifier]
+         WHERE id = $3 OR mobile = $4 OR email = $4 OR mobile = $5 OR email = $6`,
+        [passwordHash, nowISO, userId, identifier, mobile, email]
       );
     } catch {
       this.memoryPasswordHashes.set(userId, passwordHash);
       this.memoryPasswordHashes.set(identifier, passwordHash);
     }
+    // Set memory map in all modes so memory fallback works if DB drops or falls back
+    this.memoryPasswordHashes.set(userId, passwordHash);
+    this.memoryPasswordHashes.set(identifier, passwordHash);
   }
 
   /**
    * Retrieves the stored password hash for an identifier or userId.
    */
   public static async getPasswordHash(identifier: string): Promise<string | null> {
+    const { mobile, email } = this.deriveIdentifierFields(identifier);
+
     try {
       const pool = db.getPool();
       const { rows } = await pool.query(
-        `SELECT password_hash FROM users WHERE id = $1 OR mobile = $1 OR email = $1`,
-        [identifier]
+        `SELECT password_hash FROM users 
+         WHERE (id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($1) OR LOWER(email) = LOWER($1))
+           AND password_hash IS NOT NULL AND password_hash != ''
+         ORDER BY password_updated_at DESC NULLS LAST`,
+        [identifier, mobile, email]
       );
       if (rows.length > 0 && rows[0].password_hash) {
         return rows[0].password_hash;
       }
     } catch {
-      return this.memoryPasswordHashes.get(identifier) || null;
+      return this.memoryPasswordHashes.get(identifier) || this.memoryPasswordHashes.get(identifier.toLowerCase()) || null;
     }
-    return this.memoryPasswordHashes.get(identifier) || null;
+    return this.memoryPasswordHashes.get(identifier) || this.memoryPasswordHashes.get(identifier.toLowerCase()) || null;
   }
 
   /**
