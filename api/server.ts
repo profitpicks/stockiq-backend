@@ -5,7 +5,7 @@ import { db } from "../database/connection.js";
 
 const server = http.createServer(app);
 
-server.listen(config.port, config.host, () => {
+server.listen(config.port, config.host, async () => {
   console.log(`=======================================================`);
   console.log(`[stockiq] Foundation Service Started`);
   console.log(`Environment: ${config.nodeEnv}`);
