@@ -1,0 +1,71 @@
+/**
+ * stockiq - Notifications and Activity Domain Contracts
+ */
+
+export const NotificationTypes = {
+  // Verification
+  VERIFICATION_SUBMITTED: "VERIFICATION_SUBMITTED",
+  VERIFICATION_MORE_INFO: "VERIFICATION_MORE_INFO",
+  VERIFICATION_APPROVED: "VERIFICATION_APPROVED",
+  VERIFICATION_REJECTED: "VERIFICATION_REJECTED",
+  VERIFICATION_STATUS_CHANGED: "VERIFICATION_STATUS_CHANGED",
+
+  // Services
+  SERVICE_SUBMITTED: "SERVICE_SUBMITTED",
+  SERVICE_APPROVED: "SERVICE_APPROVED",
+  SERVICE_REJECTED: "SERVICE_REJECTED",
+  SERVICE_PAUSED: "SERVICE_PAUSED",
+  SERVICE_STATUS_CHANGED: "SERVICE_STATUS_CHANGED",
+
+  // Recommendations
+  RECOMMENDATION_PUBLISHED: "RECOMMENDATION_PUBLISHED",
+  RECOMMENDATION_STATUS_CHANGED: "RECOMMENDATION_STATUS_CHANGED",
+
+  // Subscribers / Services
+  SUBSCRIBER_NEW: "SUBSCRIBER_NEW",
+  SUBSCRIBER_ACTIVATED: "SUBSCRIBER_ACTIVATED",
+  SUBSCRIBER_CANCELLED: "SUBSCRIBER_CANCELLED",
+  SUBSCRIBER_EXPIRED: "SUBSCRIBER_EXPIRED",
+
+  // Payments
+  PAYMENT_RECEIVED: "PAYMENT_RECEIVED",
+  PAYMENT_REFUNDED: "PAYMENT_REFUNDED",
+
+  // Compliance
+  COMPLIANCE_DECLARATION_REQUEST: "COMPLIANCE_DECLARATION_REQUEST",
+  COMPLIANCE_STATUS_CHANGED: "COMPLIANCE_STATUS_CHANGED",
+  COMPLIANCE_WARNING: "COMPLIANCE_WARNING",
+
+  // Community
+  COMMUNITY_REPLY: "COMMUNITY_REPLY",
+  COMMUNITY_REACTION: "COMMUNITY_REACTION",
+  COMMUNITY_FOLLOW: "COMMUNITY_FOLLOW",
+  COMMUNITY_MODERATION: "COMMUNITY_MODERATION",
+
+  // System
+  SYSTEM_MAINTENANCE: "SYSTEM_MAINTENANCE",
+  SYSTEM_MESSAGE: "SYSTEM_MESSAGE",
+} as const;
+
+export type NotificationType = (typeof NotificationTypes)[keyof typeof NotificationTypes];
+
+export interface Notification {
+  id: string;
+  recipientId: string;
+  notificationType: NotificationType;
+  title: string;
+  message: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  isRead: boolean;
+  createdAt: string; // ISO UTC
+  readAt?: string; // ISO UTC
+}
+
+export interface ActivityItem {
+  id: string;
+  description: string;
+  module: string;
+  timestamp: string; // ISO UTC
+  statusBadge?: string;
+}
