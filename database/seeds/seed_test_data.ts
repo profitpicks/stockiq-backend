@@ -15,10 +15,16 @@ export async function seedTestData(): Promise<void> {
   // Account 1: Investor Trader
   const investor = await otpService.findOrCreateUser("User001", "Demo Retail Investor", "INVESTOR");
   await PasswordService.setPassword(investor.id, "User001", testPasswordHash);
+  await PasswordService.unlockAccount("User001");
+  await PasswordService.unlockAccount(investor.id);
+  await otpService.setUserRole(investor.id, PlatformRoles.INVESTOR_RETAIL);
 
   // Account 2: Provider Research Analyst
   const providerUser = await otpService.findOrCreateUser("Tradenexusresearch", "Tradenexus Research Admin", "PROVIDER");
   await PasswordService.setPassword(providerUser.id, "Tradenexusresearch", testPasswordHash);
+  await PasswordService.unlockAccount("Tradenexusresearch");
+  await PasswordService.unlockAccount(providerUser.id);
+  await otpService.setUserRole(providerUser.id, PlatformRoles.RESEARCH_ANALYST);
 
   // Register Provider Dossier for Tradenexus Research (DEMO / TEST)
   let providerDossier = await providerService.getProviderByUserId(providerUser.id);
@@ -41,7 +47,9 @@ export async function seedTestData(): Promise<void> {
   // Account 3: Super Admin
   const adminUser = await otpService.findOrCreateUser("stockiq_superadmin", "Stockiq Super Admin", "ADMIN");
   await PasswordService.setPassword(adminUser.id, "stockiq_superadmin", testPasswordHash);
-  adminUser.roles = [PlatformRoles.SUPER_ADMIN];
+  await PasswordService.unlockAccount("stockiq_superadmin");
+  await PasswordService.unlockAccount(adminUser.id);
+  await otpService.setUserRole(adminUser.id, PlatformRoles.SUPER_ADMIN);
 
   // Seed Services for Tradenexus Research
   if (providerDossier) {
