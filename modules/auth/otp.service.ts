@@ -242,15 +242,11 @@ export class OtpService {
     try {
       const pool = db.getPool();
       // Look up existing user
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
-      const query = isUuid
-        ? `SELECT u.id, u.mobile, u.email, u.full_name AS "fullName", u.user_type AS "userType", 
-                  COALESCE(u.account_status, 'ACTIVE') AS "accountStatus"
-           FROM users u WHERE u.id = $1 OR u.mobile = $2 OR u.email = $3`
-        : `SELECT u.id, u.mobile, u.email, u.full_name AS "fullName", u.user_type AS "userType", 
-                  COALESCE(u.account_status, 'ACTIVE') AS "accountStatus"
-           FROM users u WHERE u.mobile = $1 OR u.email = $2`;
-      const queryParams = isUuid ? [identifier, mobile, email] : [mobile, email];
+      const query = `SELECT u.id, u.mobile, u.email, u.full_name AS "fullName", u.user_type AS "userType", 
+                            COALESCE(u.account_status, 'ACTIVE') AS "accountStatus"
+                     FROM users u 
+                     WHERE u.id = $1 OR u.mobile = $2 OR u.email = $3 OR LOWER(u.id) = LOWER($1) OR LOWER(u.mobile) = LOWER($1) OR LOWER(u.email) = LOWER($1)`;
+      const queryParams = [identifier, mobile, email];
       const { rows } = await pool.query(query, queryParams);
 
       if (rows.length > 0) {
@@ -316,6 +312,20 @@ export class OtpService {
       OtpService.memoryUsers.set(memoryUser.id, memoryUser);
       OtpService.memoryUsers.set(identifier, memoryUser);
       return memoryUser;
+    }
+  }
+
+  public async setUserRole(userId: string, role: PlatformRole): Promise<void> {
+    try {
+      const pool = db.getPool();
+      await pool.query(`DELETE FROM user_roles WHERE user_id = $1`, [userId]);
+      await pool.query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [userId, role]);
+    } catch {
+      // Memory fallback
+    }
+    const memoryUser = OtpService.memoryUsers.get(userId);
+    if (memoryUser) {
+      memoryUser.roles = [role];
     }
   }
 
