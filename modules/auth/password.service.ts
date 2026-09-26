@@ -119,7 +119,7 @@ export class PasswordService {
       const pool = db.getPool();
       const { rows } = await pool.query(
         `SELECT locked_until, failed_login_attempts FROM users 
-         WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+         WHERE id = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($2) OR LOWER(email) = LOWER($3)`,
         [identifier, mobile, email]
       );
 
@@ -153,7 +153,7 @@ export class PasswordService {
     try {
       const pool = db.getPool();
       const { rows } = await pool.query(
-        `SELECT id, failed_login_attempts FROM users WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+        `SELECT id, failed_login_attempts FROM users WHERE id = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($2) OR LOWER(email) = LOWER($3)`,
         [identifier, mobile, email]
       );
 
@@ -202,7 +202,7 @@ export class PasswordService {
     try {
       const pool = db.getPool();
       await pool.query(
-        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3`,
+        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($2) OR LOWER(email) = LOWER($3)`,
         [identifier, mobile, email]
       );
     } catch {
@@ -229,8 +229,8 @@ export class PasswordService {
       const pool = db.getPool();
       await pool.query(
         `UPDATE users SET password_hash = $1, password_updated_at = $2, failed_login_attempts = 0, locked_until = NULL 
-         WHERE id = $3 OR mobile = $4 OR email = $4 OR mobile = $5 OR email = $6`,
-        [passwordHash, nowISO, userId, identifier, mobile, email]
+         WHERE id = $3 OR mobile = $4 OR email = $5 OR LOWER(id) = LOWER($3) OR LOWER(mobile) = LOWER($4) OR LOWER(email) = LOWER($5)`,
+        [passwordHash, nowISO, userId, mobile, email]
       );
     } catch {
       this.memoryPasswordHashes.set(userId, passwordHash);
@@ -251,7 +251,7 @@ export class PasswordService {
       const pool = db.getPool();
       const { rows } = await pool.query(
         `SELECT password_hash FROM users 
-         WHERE (id = $1 OR mobile = $1 OR email = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($1) OR LOWER(email) = LOWER($1))
+         WHERE (id = $1 OR mobile = $2 OR email = $3 OR LOWER(id) = LOWER($1) OR LOWER(mobile) = LOWER($2) OR LOWER(email) = LOWER($3))
            AND password_hash IS NOT NULL AND password_hash != ''
          ORDER BY password_updated_at DESC NULLS LAST`,
         [identifier, mobile, email]
