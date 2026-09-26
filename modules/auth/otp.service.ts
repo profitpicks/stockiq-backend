@@ -245,7 +245,7 @@ export class OtpService {
       const query = `SELECT u.id, u.mobile, u.email, u.full_name AS "fullName", u.user_type AS "userType", 
                             COALESCE(u.account_status, 'ACTIVE') AS "accountStatus"
                      FROM users u 
-                     WHERE u.id = $1 OR u.mobile = $2 OR u.email = $3 OR LOWER(u.id) = LOWER($1) OR LOWER(u.mobile) = LOWER($1) OR LOWER(u.email) = LOWER($1)`;
+                     WHERE u.id = $1 OR u.mobile = $2 OR u.email = $3 OR LOWER(u.id) = LOWER($1) OR LOWER(u.mobile) = LOWER($2) OR LOWER(u.email) = LOWER($3)`;
       const queryParams = [identifier, mobile, email];
       const { rows } = await pool.query(query, queryParams);
 
